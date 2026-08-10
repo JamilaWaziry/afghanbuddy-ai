@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   Sparkles,
@@ -29,163 +30,153 @@ const categories = [
 export default function Hero() {
   const [current, setCurrent] = useState(0);
   const [query, setQuery] = useState("");
-  const [response, setResponse] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % images.length);
     }, 5000);
+
     return () => clearInterval(timer);
   }, []);
 
-  const handleAskAI = async () => {
-    if (!query) return;
-    setLoading(true);
-    setResponse("");
+  const handleAskAI = () => {
+    if (!query.trim()) return;
 
-    try {
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "openai/gpt-4o-mini", // you can change to another model
-          messages: [{ role: "user", content: query }],
-        }),
-      });
-
-      const data = await res.json();
-      setResponse(data.choices?.[0]?.message?.content || "No response");
-    } catch (err) {
-      console.error("Error asking AI:", err);
-      setResponse("Error contacting AI.");
-    } finally {
-      setLoading(false);
-    }
+    navigate("/assistant", {
+      state: {
+        prompt: query,
+      },
+    });
   };
 
   return (
-    <section className="relative flex min-h-screen items-center overflow-hidden">
-      {/* Background */}
+    <section className="relative flex min-h-[85vh] items-center overflow-hidden sm:min-h-[75vh]">
       {images.map((image, index) => (
         <motion.img
           key={index}
           src={image}
           alt=""
-          initial={{ opacity: 0 }}
           animate={{
             opacity: current === index ? 1 : 0,
-            scale: current === index ? 1.08 : 1,
+            scale: current === index ? 1.06 : 1,
           }}
           transition={{ duration: 1.5 }}
           className="absolute inset-0 h-full w-full object-cover"
         />
       ))}
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/60" />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(16,27,45,0.55) 0%, rgba(16,27,45,0.72) 60%, rgba(16,27,45,0.88) 100%)",
+        }}
+      />
 
-      {/* Content */}
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-6">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-5 py-16 sm:px-6 sm:py-20">
         <motion.div
-          initial={{ opacity: 0, y: 70 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
+          transition={{ duration: 0.9 }}
           className="mx-auto max-w-4xl text-center"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm text-emerald-300 backdrop-blur">
-            <Sparkles size={16} />
+          <span
+            className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-medium uppercase tracking-widest text-[#F3D98C] backdrop-blur sm:text-sm"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            <Sparkles size={14} />
             AI Powered Travel Assistant
           </span>
 
-          <h1 className="mt-8 text-5xl font-black leading-tight text-white md:text-7xl">
+          <h1
+            className="mt-6 text-[2.25rem] leading-[1.1] text-white sm:text-5xl md:text-6xl"
+            style={{ fontFamily: "'Fraunces', serif", fontWeight: 600 }}
+          >
             Explore Afghanistan
             <br />
-            Like Never Before
+            <span className="text-[#5FC9CC]">Like Never Before</span>
           </h1>
 
-          <p className="mx-auto mt-8 max-w-3xl text-lg leading-8 text-slate-200">
+          <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base md:text-lg">
             Discover breathtaking landscapes, historical treasures, hidden
             valleys and unforgettable adventures with your AI travel companion.
           </p>
 
-          {/* Search */}
-          <div className="mx-auto mt-12 max-w-3xl rounded-3xl border border-white/20 bg-white/10 p-3 backdrop-blur-xl">
-            <div className="flex flex-col gap-3 md:flex-row">
+          <div className="mx-auto mt-8 max-w-3xl rounded-3xl border border-white/20 bg-white/10 p-2.5 backdrop-blur-xl sm:mt-10 sm:p-3">
+            <div className="flex flex-col gap-2.5 sm:flex-row sm:gap-3">
               <div className="relative flex-1">
                 <Search
-                  size={22}
-                  className="absolute left-5 top-4 text-slate-300"
+                  size={19}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 sm:left-5"
                 />
+
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAskAI();
+                  }}
                   placeholder="Where should I travel in Afghanistan?"
-                  className="w-full rounded-2xl bg-transparent py-4 pl-14 pr-5 text-white placeholder:text-slate-300 outline-none"
+                  className="w-full rounded-2xl bg-transparent py-3 pl-11 pr-4 text-sm text-white placeholder:text-slate-300 outline-none sm:py-3.5 sm:pl-12 sm:pr-5 sm:text-base"
                 />
               </div>
 
               <button
                 onClick={handleAskAI}
-                disabled={loading}
-                className="rounded-2xl bg-emerald-600 px-8 py-4 font-semibold text-white transition hover:bg-emerald-700"
+                className="rounded-2xl bg-gradient-to-r from-[#0E8388] to-[#0B5E63] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[#0E8388]/30 transition hover:brightness-110 sm:px-7 sm:py-3.5 sm:text-base"
               >
-                {loading ? "Thinking..." : "Ask AI"}
+                Ask AI
               </button>
             </div>
           </div>
 
-          {/* AI Response */}
-          {response && (
-            <div className="mx-auto mt-6 max-w-3xl rounded-xl bg-white/10 p-4 text-white backdrop-blur">
-              {response}
-            </div>
-          )}
-
-          {/* Categories */}
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
+          <div className="mt-6 flex flex-wrap justify-center gap-2 sm:mt-8 sm:gap-3">
             {categories.map((item) => {
               const Icon = item.icon;
+
               return (
                 <button
                   key={item.name}
-                  className="flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-3 text-white backdrop-blur transition hover:bg-emerald-600"
+                  onClick={() => setQuery(item.name)}
+                  className="flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-xs text-white backdrop-blur transition hover:border-[#0E8388] hover:bg-[#0E8388]/80 sm:px-4 sm:py-2.5 sm:text-sm"
                 >
-                  <Icon size={18} />
+                  <Icon size={15} />
                   {item.name}
                 </button>
               );
             })}
           </div>
 
-          {/* CTA */}
-          <div className="mt-14 flex flex-wrap justify-center gap-5">
-            <button className="flex items-center gap-3 rounded-full bg-emerald-600 px-8 py-4 font-semibold text-white transition hover:bg-emerald-700">
+          <div className="mt-8 flex flex-wrap justify-center gap-3 sm:mt-10 sm:gap-4">
+            <button className="flex items-center gap-2.5 rounded-full bg-gradient-to-r from-[#C1502E] to-[#A33F22] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[#C1502E]/25 transition hover:brightness-110 sm:px-7 sm:py-3.5 sm:text-base">
               Explore Destinations
-              <ArrowRight size={20} />
+              <ArrowRight size={18} />
             </button>
 
-            <button className="flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-8 py-4 text-white backdrop-blur">
-              <MapPin size={20} />
+            <button className="flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm text-white backdrop-blur transition hover:bg-white/15 sm:px-7 sm:py-3.5 sm:text-base">
+              <MapPin size={18} />
               Popular Places
             </button>
           </div>
+
+          <div className="mt-8 flex justify-center gap-2 sm:mt-10">
+            {images.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrent(index)}
+                aria-label={`Go to slide ${index + 1}`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  current === index
+                    ? "w-6 bg-[#5FC9CC]"
+                    : "w-1.5 bg-white/35 hover:bg-white/60"
+                }`}
+              />
+            ))}
+          </div>
         </motion.div>
       </div>
-
-      {/* Scroll Indicator */}
-      <motion.div
-        animate={{ y: [0, 12, 0] }}
-        transition={{ repeat: Infinity, duration: 2 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
-      >
-        <div className="h-12 w-7 rounded-full border-2 border-white flex justify-center">
-          <div className="mt-2 h-3 w-1 rounded-full bg-white" />
-        </div>
-      </motion.div>
     </section>
   );
 }

@@ -10,12 +10,10 @@ const Navbar = () => {
   return (
     <header className="fixed top-0 left-0 z-50 w-full transition-all duration-500">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-        {/* Logo */}
         <NavLink to="/">
           <Logo />
         </NavLink>
 
-        {/* Desktop Navigation */}
         <nav className="hidden items-center gap-8 md:flex">
           {navigation.map((item) => (
             <NavLink
@@ -34,7 +32,6 @@ const Navbar = () => {
           ))}
         </nav>
 
-        {/* Right Side */}
         <div className="hidden items-center gap-5 md:flex">
           <NavLink to="/favorites">
             <Heart className="h-5 w-5 text-white transition hover:text-red-400" />
@@ -45,7 +42,6 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* Mobile Menu Button */}
         <button
           className="text-white md:hidden"
           onClick={() => setIsOpen(!isOpen)}
@@ -54,7 +50,6 @@ const Navbar = () => {
         </button>
       </div>
 
-      {/* Mobile Menu */}
       {isOpen && (
         <div className="border-t border-slate-200 bg-white md:hidden">
           <nav className="flex flex-col p-5">

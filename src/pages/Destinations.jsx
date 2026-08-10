@@ -23,6 +23,9 @@ export default function Destinations() {
     favoritesOnly,
     setFavoritesOnly,
 
+    categories,
+    provinces,
+
     filtered,
   } = useDestinations(favorites);
 
@@ -39,6 +42,8 @@ export default function Destinations() {
         setSort={setSort}
         favoritesOnly={favoritesOnly}
         setFavoritesOnly={setFavoritesOnly}
+        categories={categories}
+        provinces={provinces}
       />
 
       <DestinationGrid destinations={filtered} />

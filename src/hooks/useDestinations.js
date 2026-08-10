@@ -12,6 +12,16 @@ export default function useDestinations(favorites) {
 
   const [favoritesOnly, setFavoritesOnly] = useState(false);
 
+  const categories = useMemo(() => {
+    const unique = [...new Set(destinations.map((item) => item.category))];
+    return ["All", ...unique.sort()];
+  }, []);
+
+  const provinces = useMemo(() => {
+    const unique = [...new Set(destinations.map((item) => item.province))];
+    return ["All", ...unique.sort()];
+  }, []);
+
   const filtered = useMemo(() => {
     let data = [...destinations];
 
@@ -57,6 +67,9 @@ export default function useDestinations(favorites) {
 
     favoritesOnly,
     setFavoritesOnly,
+
+    categories,
+    provinces,
 
     filtered,
   };

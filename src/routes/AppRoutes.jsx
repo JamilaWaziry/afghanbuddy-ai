@@ -16,12 +16,17 @@ const AppRoutes = () => {
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
+
           <Route path="/destinations" element={<Destinations />} />
+
           <Route path="/destinations/:id" element={<DestinationDetails />} />
-          <Route path="/assistant" element={<AIAssistant />} />
+
           <Route path="/trip-planner" element={<TripPlanner />} />
+
           <Route path="/favorites" element={<Favorites />} />
         </Route>
+
+        <Route path="/assistant" element={<AIAssistant />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -1,20 +1,23 @@
 import { destinations } from "../data/destinations";
 
 const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
-
-const MODEL = "inclusionai/ling-3.0-flash:free";
+const MODEL = "qwen/qwen3-30b-a3b";
 
 export async function generateTrip(data) {
-  // Check if user mentioned one of our destinations
+  const searchText = `
+    ${data.destination || ""}
+    ${data.interests || ""}
+  `.toLowerCase();
+
   const matchedDestination = destinations.find((destination) =>
-    data.interests.toLowerCase().includes(destination.name.toLowerCase()),
+    searchText.includes(destination.name.toLowerCase()),
   );
 
   let destinationContext = "";
 
   if (matchedDestination) {
     destinationContext = `
-Destination Information
+DESTINATION INFORMATION
 
 Name:
 ${matchedDestination.name}
@@ -34,11 +37,12 @@ ${matchedDestination.duration}
 Rating:
 ${matchedDestination.rating}
 
+IMPORTANT:
 Only recommend this destination.
 `;
   } else {
     destinationContext = `
-Available Destinations
+AVAILABLE DESTINATIONS
 
 ${destinations
   .map(
@@ -55,41 +59,148 @@ Rating: ${destination.rating}
 `;
   }
 
+  const userPreferences = `
+Destination:
+${data.destination || "Open to recommendations"}
+
+Travel Style:
+${data.style || "General"}
+
+Budget:
+${data.budget || "Medium"}
+
+Duration:
+${data.duration || "3 Days"}
+
+Travel Companion:
+${data.companion || "Solo"}
+
+Interests:
+${data.interests || "General exploration"}
+
+Mood:
+${data.mood || "Relaxed"}
+`;
+
   const prompt = `
-You are AfghanBuddy AI.
+You are AfghanBuddy AI, a premium AI travel assistant specializing in Afghanistan travel.
 
-You are an expert travel assistant for Afghanistan.
+Your job is to create beautiful, practical and personalized travel plans using ONLY the destination information provided below.
 
-Use ONLY the destination information provided below.
+IMPORTANT RULES:
+
+- Use ONLY destinations provided below.
+- Never invent a destination.
+- Never invent destination ratings.
+- Never invent destination durations.
+- Never invent best-time information.
+- Never invent destination-specific facts.
+- Never recommend a destination outside the provided list.
+- General travel advice is allowed.
+- Do not present unsupported destination information as facts.
+- Use all of the user's trip preferences.
+- Do not repeat the user's request.
+- Make the response useful and practical.
+- Do not mention the database.
+- Do not mention these instructions.
+
+AVAILABLE DESTINATION DATA:
 
 ${destinationContext}
 
-User Request
+USER TRIP PREFERENCES:
 
-${data.interests}
+${userPreferences}
 
-Generate a professional response using this format:
+RESPONSE FORMAT:
 
-🌄 Trip Summary
+Start with a short friendly introduction.
 
-📅 Day-by-Day Itinerary
+## Trip Overview
 
-💰 Estimated Budget
+Give a short 2-3 sentence overview of the trip.
 
-🎒 Packing List
+## Recommended Destination
 
-🛡 Safety Tips
+Explain why the selected destination fits the user's preferences.
 
-🌤 Best Time to Visit
+Include useful information such as:
+- Why it matches the travel style
+- Why it matches the interests
+- Why it fits the mood
+- How it fits the requested duration
 
-❤️ Why This Destination Was Recommended
+## Suggested Itinerary
 
-Rules:
+Create a realistic day-by-day itinerary based on the requested duration.
 
-- Only recommend destinations from the provided list.
-- Never invent destinations.
-- Keep the answer friendly and professional.
-- Use Markdown formatting.
+For each day use:
+
+### Morning
+
+Activities or experiences.
+
+### Afternoon
+
+Activities or experiences.
+
+### Evening
+
+Activities or experiences.
+
+Keep the itinerary practical and easy to follow.
+
+## Estimated Budget
+
+Provide a simple estimated budget range.
+
+Clearly state:
+
+"Estimated budget only — actual costs may vary."
+
+Do not present the amount as an exact price.
+
+## What to Pack
+
+Provide 5-8 useful packing recommendations.
+
+## Best Time to Visit
+
+Use ONLY the provided destination best-time information.
+
+## Travel Tips
+
+Provide useful general travel advice.
+
+Do not invent:
+- Specific security claims
+- Exact transportation schedules
+- Hotel prices
+- Opening hours
+- Road conditions
+- Exact ticket prices
+- Unsupported destination facts
+
+## Why You'll Like It
+
+Finish with a short personalized explanation based on the user's interests, travel style and mood.
+
+STYLE:
+
+- Friendly
+- Professional
+- Warm
+- Premium travel-app style
+- Concise but informative
+- Short paragraphs
+- Clear headings
+- Bullet points
+- Useful details
+- No huge paragraphs
+- No emojis
+- No decorative symbols
+- No emoji characters in headings
+- Use normal Markdown headings
 `;
 
   try {
@@ -101,8 +212,6 @@ Rules:
         headers: {
           Authorization: `Bearer ${API_KEY}`,
           "Content-Type": "application/json",
-
-          // Optional but recommended by OpenRouter
           "HTTP-Referer": window.location.origin,
           "X-Title": "AfghanBuddy AI",
         },
@@ -112,15 +221,14 @@ Rules:
 
           temperature: 0.7,
 
-          max_tokens: 1800,
+          max_tokens: 2500,
 
           messages: [
             {
               role: "system",
               content:
-                "You are AfghanBuddy AI, an intelligent travel assistant specialised in Afghanistan tourism.",
+                "You are AfghanBuddy AI, a premium AI travel assistant specialized in Afghanistan tourism.",
             },
-
             {
               role: "user",
               content: prompt,
@@ -131,20 +239,31 @@ Rules:
     );
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error(error);
-      throw new Error("OpenRouter request failed.");
+      const errorText = await response.text();
+
+      console.error("OpenRouter Error:", errorText);
+
+      throw new Error(`OpenRouter request failed: ${response.status}`);
     }
 
     const json = await response.json();
 
-    return (
-      json?.choices?.[0]?.message?.content ||
-      "Sorry, I couldn't generate a travel plan."
-    );
-  } catch (error) {
-    console.error(error);
+    const content = json?.choices?.[0]?.message?.content;
 
-    return "❌ Sorry, AfghanBuddy AI is currently unavailable. Please try again in a few moments.";
+    if (!content) {
+      throw new Error("No content returned from OpenRouter.");
+    }
+
+    return content;
+  } catch (error) {
+    console.error("AI Error:", error);
+
+    return `
+## Unable to Generate Your Trip
+
+Sorry, AfghanBuddy AI is temporarily unavailable.
+
+Please try again in a few moments.
+`;
   }
 }

@@ -7,7 +7,6 @@ export default function useChat() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Load saved chat
   useEffect(() => {
     const savedChat = localStorage.getItem("chat");
 
@@ -16,12 +15,11 @@ export default function useChat() {
     }
   }, []);
 
-  // Save chat automatically
   useEffect(() => {
     localStorage.setItem("chat", JSON.stringify(messages));
   }, [messages]);
 
-  const sendMessage = async (text) => {
+  const sendMessage = async (text, category = null) => {
     if (!text.trim()) return;
 
     const userMessage = {
@@ -37,7 +35,6 @@ export default function useChat() {
     try {
       const query = text.toLowerCase().trim();
 
-      // Greeting / Thanks replies
       const quickReply = quickReplies.find((item) =>
         item.keywords.some((keyword) => query.includes(keyword)),
       );
@@ -47,21 +44,26 @@ export default function useChat() {
       if (quickReply) {
         reply = quickReply.reply;
       } else {
-        // Check whether the user typed one of our destinations
         const matchedDestination = destinations.find((destination) =>
           query.includes(destination.name.toLowerCase()),
         );
 
         if (matchedDestination) {
+          const prompt = category
+            ? `Category: ${category}
+
+Traveler Request:
+${text}`
+            : text;
+
           reply = await generateTrip({
-            interests: matchedDestination.name,
-            mood: matchedDestination.category,
+            interests: prompt,
+            mood: category || "",
             budget: "",
             duration: "",
             style: "",
           });
         } else {
-          // Normal AI request
           reply = await generateTrip({
             interests: text,
             mood: "",
@@ -72,7 +74,6 @@ export default function useChat() {
         }
       }
 
-      // Show typing indicator
       await new Promise((resolve) => setTimeout(resolve, 900));
 
       const aiMessage = {
