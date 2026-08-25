@@ -1,9 +1,5 @@
 import { supabase } from "./supabase";
 
-/* ================================
-   SIGN UP
-================================ */
-
 export async function signUp(email, password, fullName) {
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -22,10 +18,6 @@ export async function signUp(email, password, fullName) {
   return data;
 }
 
-/* ================================
-   LOGIN
-================================ */
-
 export async function signIn(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -39,10 +31,6 @@ export async function signIn(email, password) {
   return data;
 }
 
-/* ================================
-   LOGOUT
-================================ */
-
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
 
@@ -50,10 +38,6 @@ export async function signOut() {
     throw error;
   }
 }
-
-/* ================================
-   CURRENT USER
-================================ */
 
 export async function getCurrentUser() {
   const {
