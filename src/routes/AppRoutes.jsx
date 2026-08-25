@@ -9,7 +9,9 @@ import AIAssistant from "../pages/AIAssistant";
 import TripPlanner from "../pages/TripPlanner";
 import Favorites from "../pages/Favorites";
 import NotFound from "../pages/NotFound";
-
+// import Login from "../pages/Login";
+// import Signup from "../pages/Signup";
+import Profile from "../pages/Profile";
 const AppRoutes = () => {
   return (
     <BrowserRouter>
@@ -27,7 +29,9 @@ const AppRoutes = () => {
         </Route>
 
         <Route path="/assistant" element={<AIAssistant />} />
-
+        {/* <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} /> */}
+        <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
