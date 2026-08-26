@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { generateTrip } from "../services/ai";
+import { chat } from "../services/openrouter";
 import { quickReplies } from "../data/chatReplies";
 import { destinations } from "../data/destinations";
 
@@ -35,6 +35,7 @@ export default function useChat() {
     try {
       const query = text.toLowerCase().trim();
 
+      // quick replies
       const quickReply = quickReplies.find((item) =>
         item.keywords.some((keyword) => query.includes(keyword)),
       );
@@ -48,33 +49,56 @@ export default function useChat() {
           query.includes(destination.name.toLowerCase()),
         );
 
+        let context = "";
+
         if (matchedDestination) {
-          const prompt = category
-            ? `Category: ${category}
+          context = `
+Destination:
+${matchedDestination.name}
 
-Traveler Request:
-${text}`
-            : text;
+Category:
+${matchedDestination.category}
 
-          reply = await generateTrip({
-            interests: prompt,
-            mood: category || "",
-            budget: "",
-            duration: "",
-            style: "",
-          });
+Description:
+${matchedDestination.description}
+
+Best Time:
+${matchedDestination.bestTime}
+
+Recommended Duration:
+${matchedDestination.duration}
+
+Rating:
+${matchedDestination.rating}
+`;
         } else {
-          reply = await generateTrip({
-            interests: text,
-            mood: "",
-            budget: "",
-            duration: "",
-            style: "",
-          });
-        }
-      }
+          context = destinations
+            .map(
+              (destination) => `
+Destination:
+${destination.name}
 
-      await new Promise((resolve) => setTimeout(resolve, 900));
+Category:
+${destination.category}
+
+Description:
+${destination.description}
+
+Best Time:
+${destination.bestTime}
+
+Recommended Duration:
+${destination.duration}
+
+Rating:
+${destination.rating}
+`,
+            )
+            .join("\n");
+        }
+
+        reply = await chat(text, context);
+      }
 
       const aiMessage = {
         id: Date.now() + 1,
@@ -84,13 +108,13 @@ ${text}`
 
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
-      console.error(error);
+      console.error("Chat Error:", error);
 
       const errorMessage = {
         id: Date.now() + 1,
         role: "assistant",
         content:
-          "❌ Sorry, something went wrong while generating your travel plan. Please try again.",
+          "Sorry, something went wrong while connecting to AfghanBuddy AI. Please try again.",
       };
 
       setMessages((prev) => [...prev, errorMessage]);
